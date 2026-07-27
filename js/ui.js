@@ -14,7 +14,12 @@ import {
 import { sanitizeFileName } from "./file-names.js";
 import { readImageDimensions } from "./image-metadata.js";
 import { isFileSystemAccessSupported, isChromeOrEdgeBrowser, pickRootDirectory } from "./file-system.js";
-import { createWritePlan, writeConfiguration } from "./configuration-writer.js";
+import {
+  createWritePlan,
+  writeConfiguration,
+  createConfigurationZipBlob,
+  buildZipExportFileName
+} from "./configuration-writer.js";
 import { loadTeamCatalog, fetchTeamLogoFile, getDefaultTeamName } from "./team-catalog.js";
 import { loadPreferences, savePreferences, clearPreferences } from "./preferences.js";
 import {
@@ -48,6 +53,8 @@ const preferences = loadPreferences();
 let rememberedAdOrder = preferences.adNameOrder.slice();
 const restoredEntryIds = { ads: new Set(), goal: null, media: new Set() };
 let importInfo = null;
+let isExportingZip = false;
+let lastExportMethod = "usb";
 
 function persistAdsCache() {
   saveCachedCategory("ads", state.ads.map((entry) => entry.file));
@@ -96,6 +103,7 @@ function cacheRefs() {
     "export-configuration-button",
     "import-configuration-button",
     "import-configuration-input",
+    "export-zip-button",
     "media-cache-notice",
     "media-cache-notice-text",
     "media-cache-clear-button",
@@ -148,7 +156,9 @@ function cacheRefs() {
     "progress-text",
     "progress-count",
     "success-view",
+    "success-heading",
     "success-summary",
+    "success-instructions",
     "success-tech-details-button",
     "success-tech-details-wrap",
     "success-tech-details-textarea",
@@ -164,7 +174,10 @@ function cacheRefs() {
     "error-close-button",
     "directory-confirm-dialog",
     "directory-confirm-cancel-button",
-    "directory-confirm-proceed-button"
+    "directory-confirm-proceed-button",
+    "zip-confirm-dialog",
+    "zip-confirm-cancel-button",
+    "zip-confirm-proceed-button"
   ];
 
   ids.forEach((id) => {
@@ -747,7 +760,21 @@ async function restoreCachedMedia() {
   }
 }
 
+function discardRestoredGuestName() {
+  lastAutoLogoKey.guest = null;
+  closeSuggestions("guest");
+  refs["guest-name-status"].textContent = "";
+  refs["guest-name-input"].value = "";
+  refs["guest-name-counter"].textContent = "0 / 8";
+  setFieldError(refs["guest-name-error"], "");
+  touched.guestName = false;
+  state.guestName = "";
+  savePreferences({ guestName: "" });
+}
+
 async function discardRestoredMedia() {
+  discardRestoredGuestName();
+
   state.ads = state.ads.filter((entry) => {
     if (restoredEntryIds.ads.has(entry.id)) {
       revokeEntryPreview(entry);
@@ -801,6 +828,66 @@ function handleExportConfiguration() {
   link.remove();
 
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function countPlanItems(plan) {
+  return plan.home.length + plan.guest.length + plan.ads.length + plan.goal.length + plan.media.length;
+}
+
+async function handleExportZip() {
+  if (isExportingZip || state.isWriting) {
+    return;
+  }
+
+  const missing = getMissingRequirements();
+
+  if (missing.length > 0) {
+    window.alert(
+      `Zip-tiedostoa ei voitu luoda, koska seuraavat pakolliset tiedot puuttuvat tai ovat virheellisiä: ${missing.join(", ")}.`
+    );
+    return;
+  }
+
+  hideResultViews();
+  clearProgress();
+  closeSuggestions("home");
+  closeSuggestions("guest");
+  setFormDisabled(true);
+  isExportingZip = true;
+  updateWriteButtonState();
+  showTransientNotice("Luodaan Zip-tiedostoa…");
+
+  const plan = createWritePlan(state);
+  const fileName = buildZipExportFileName(state);
+
+  try {
+    const blob = await createConfigurationZipBlob(plan, {
+      onProgress: (index, total, filename) => {
+        showTransientNotice(`Luodaan Zip-tiedostoa (${index} / ${total})… ${filename}`);
+      }
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    clearProgress();
+    await showZipSuccess(plan, { fileName, size: blob.size, entryCount: countPlanItems(plan) });
+  } catch (error) {
+    clearProgress();
+    await showError(error, { method: "zip" });
+  } finally {
+    isExportingZip = false;
+    setFormDisabled(false);
+    updateWriteButtonState();
+  }
 }
 
 async function applyImportedConfiguration(imported, fileName) {
@@ -1458,19 +1545,31 @@ function formatTotalsText() {
   return `Valittuja tiedostoja yhteensä: ${files.length} kpl, yhteiskoko ${formatFileSize(totalSize)}`;
 }
 
-async function buildCommonTechDetailsLines(rootHandle) {
+function describeExportMethod(method) {
+  return method === "zip"
+    ? "Zip-tiedosto (ladattu selaimeen, siirrettävä ja purettava manuaalisesti USB-muistitikulle)"
+    : "Suora kirjoitus USB-muistitikulle (File System Access API)";
+}
+
+async function buildCommonTechDetailsLines({ method, rootHandle } = {}) {
   const lines = [];
 
   lines.push(`Aikaleima: ${new Date().toLocaleString("fi-FI")}`);
   lines.push(`Selain: ${navigator.userAgent}`);
-  lines.push(rootHandle ? `Kohdekansio: ${rootHandle.name}` : "Kohdekansio: ei valittu");
+  lines.push(`Tallennustapa: ${describeExportMethod(method)}`);
 
-  if (rootHandle && typeof rootHandle.queryPermission === "function") {
-    try {
-      const permission = await rootHandle.queryPermission({ mode: "readwrite" });
-      lines.push(`Kirjoitusoikeuden tila: ${permission}`);
-    } catch {
-      lines.push("Kirjoitusoikeuden tila: ei saatavilla");
+  if (method === "zip") {
+    lines.push("Kohdekansio: ei valittu (Zip-tiedosto ladataan selaimen omaan latauskansioon)");
+  } else {
+    lines.push(rootHandle ? `Kohdekansio: ${rootHandle.name}` : "Kohdekansio: ei valittu");
+
+    if (rootHandle && typeof rootHandle.queryPermission === "function") {
+      try {
+        const permission = await rootHandle.queryPermission({ mode: "readwrite" });
+        lines.push(`Kirjoitusoikeuden tila: ${permission}`);
+      } catch {
+        lines.push("Kirjoitusoikeuden tila: ei saatavilla");
+      }
     }
   }
 
@@ -1511,7 +1610,7 @@ async function buildCommonTechDetailsLines(rootHandle) {
 }
 
 async function buildTechDetailsText(rootHandle, plan) {
-  const lines = await buildCommonTechDetailsLines(rootHandle);
+  const lines = await buildCommonTechDetailsLines({ method: "usb", rootHandle });
 
   lines.push("");
   lines.push("Hakemistorakenne:");
@@ -1520,8 +1619,22 @@ async function buildTechDetailsText(rootHandle, plan) {
   return lines.join("\n");
 }
 
-async function buildErrorTechDetailsText(rootHandle, error) {
-  const lines = await buildCommonTechDetailsLines(rootHandle);
+async function buildZipTechDetailsText(plan, zipInfo) {
+  const lines = await buildCommonTechDetailsLines({ method: "zip" });
+
+  lines.push(`Zip-tiedoston nimi: ${zipInfo.fileName}`);
+  lines.push(`Zip-tiedoston koko: ${formatFileSize(zipInfo.size)}`);
+  lines.push(`Zip-tiedoston sisältämien tiedostojen määrä: ${zipInfo.entryCount} kpl`);
+
+  lines.push("");
+  lines.push("Zip-tiedoston hakemistorakenne:");
+  lines.push(buildTreeText(plan));
+
+  return lines.join("\n");
+}
+
+async function buildErrorTechDetailsText(method, rootHandle, error) {
+  const lines = await buildCommonTechDetailsLines({ method, rootHandle });
 
   const technicalName =
     (error && error.originalError && error.originalError.name) || (error && error.name) || "Tuntematon";
@@ -1574,16 +1687,16 @@ function isFormValid() {
 function updateWriteButtonState() {
   const supported = isFileSystemAccessSupported();
   const missing = getMissingRequirements();
+  const isBusy = state.isWriting || isExportingZip;
+  const button = refs["write-button"];
 
-  refs["write-button"].disabled = !supported || state.isWriting || missing.length > 0;
+  button.textContent = supported ? "Valitse USB-muistitikku ja kirjoita tiedostot" : "Tallenna Zip-tiedosto";
+  button.disabled = isBusy || missing.length > 0;
 
   const hintEl = refs["write-button-hint"];
 
-  if (state.isWriting) {
-    hintEl.textContent = "Kirjoitus on käynnissä, painike on tilapäisesti pois käytöstä.";
-  } else if (!supported) {
-    hintEl.textContent =
-      "Painike on pois käytöstä, koska sovellus ei toimi muussa kuin Chrome-, Chromium- tai Edge-selaimessa.";
+  if (isBusy) {
+    hintEl.textContent = "Toiminto on käynnissä, painike on tilapäisesti pois käytöstä.";
   } else if (missing.length > 0) {
     hintEl.textContent =
       `Painike on pois käytöstä, koska seuraavat pakolliset tiedot puuttuvat tai ovat virheellisiä: ${missing.join(", ")}.`;
@@ -1693,9 +1806,32 @@ function wireCopyButton(copyButtonRef, textareaRef) {
 
 async function showSuccess(rootHandle, plan) {
   hideResultViews();
+  lastExportMethod = "usb";
   renderSummary(refs["success-summary"], buildSummaryEntries());
 
+  refs["success-heading"].textContent = "Konfiguraatio kirjoitettiin onnistuneesti.";
+  refs["success-instructions"].textContent =
+    "Odota vielä hetki, jotta käyttöjärjestelmä ehtii viimeistellä kirjoituksen. Poista muistitikku sen jälkeen hallitusti käyttöjärjestelmän Poista laite- tai Eject-toiminnolla.";
+  refs["rewrite-configuration-button"].textContent = "Kirjoita sama konfiguraatio uudelleen";
+
   refs["success-tech-details-textarea"].value = await buildTechDetailsText(rootHandle, plan);
+  resetTechDetailsToggle(refs["success-tech-details-button"], refs["success-tech-details-wrap"]);
+
+  setHidden(refs["success-view"], false);
+  refs["success-view"].focus();
+}
+
+async function showZipSuccess(plan, zipInfo) {
+  hideResultViews();
+  lastExportMethod = "zip";
+  renderSummary(refs["success-summary"], buildSummaryEntries());
+
+  refs["success-heading"].textContent = "Zip-tiedosto luotiin onnistuneesti.";
+  refs["success-instructions"].textContent =
+    `Zip-tiedosto "${zipInfo.fileName}" ladattiin selaimeen. Siirrä tiedosto USB-muistitikulle ja pura se siellä manuaalisesti niin, että purkamisessa syntyvä dsbController-kansio tulee suoraan USB-muistitikun juureen. Poista muistitikku lopuksi hallitusti käyttöjärjestelmän Poista laite- tai Eject-toiminnolla.`;
+  refs["rewrite-configuration-button"].textContent = "Luo sama Zip-tiedosto uudelleen";
+
+  refs["success-tech-details-textarea"].value = await buildZipTechDetailsText(plan, zipInfo);
   resetTechDetailsToggle(refs["success-tech-details-button"], refs["success-tech-details-wrap"]);
 
   setHidden(refs["success-view"], false);
@@ -1722,13 +1858,17 @@ function mapErrorToMessage(error) {
   return "Tiedostojen kirjoittaminen epäonnistui.";
 }
 
-async function showError(error, rootHandle) {
+function mapZipErrorToMessage() {
+  return "Zip-tiedoston luominen epäonnistui.";
+}
+
+async function showError(error, { method = "usb", rootHandle } = {}) {
   hideResultViews();
   clearProgress();
 
-  refs["error-message"].textContent = mapErrorToMessage(error);
+  refs["error-message"].textContent = method === "zip" ? mapZipErrorToMessage(error) : mapErrorToMessage(error);
 
-  refs["error-tech-details-textarea"].value = await buildErrorTechDetailsText(rootHandle, error);
+  refs["error-tech-details-textarea"].value = await buildErrorTechDetailsText(method, rootHandle, error);
   resetTechDetailsToggle(refs["error-tech-details-button"], refs["error-tech-details-wrap"]);
 
   setHidden(refs["error-view"], false);
@@ -1766,7 +1906,7 @@ async function runWriteProcess(rootHandle) {
   } catch (error) {
     state.writeStatus = "error";
     state.writeError = error;
-    await showError(error, rootHandle);
+    await showError(error, { method: "usb", rootHandle });
   } finally {
     state.isWriting = false;
     setFormDisabled(false);
@@ -1787,7 +1927,7 @@ async function handleDirectoryConfirmProceed() {
       return;
     }
 
-    await showError(error);
+    await showError(error, { method: "usb" });
     return;
   }
 
@@ -1799,6 +1939,12 @@ function openDirectoryConfirmDialog() {
   hideResultViews();
   clearProgress();
   refs["directory-confirm-dialog"].showModal();
+}
+
+function openZipConfirmDialog() {
+  hideResultViews();
+  clearProgress();
+  refs["zip-confirm-dialog"].showModal();
 }
 
 // --- Lomakkeen tyhjennys ja uudelleenkäyttö -------------------------------
@@ -1914,6 +2060,11 @@ export function initApp() {
     refs["import-configuration-input"].click();
   });
 
+  refs["export-zip-button"].addEventListener("click", () => {
+    closePageMenu();
+    openZipConfirmDialog();
+  });
+
   refs["import-configuration-input"].addEventListener("change", (event) => {
     handleImportFile(event.target.files);
     event.target.value = "";
@@ -1986,7 +2137,11 @@ export function initApp() {
   });
 
   refs["write-button"].addEventListener("click", () => {
-    openDirectoryConfirmDialog();
+    if (isFileSystemAccessSupported()) {
+      openDirectoryConfirmDialog();
+    } else {
+      openZipConfirmDialog();
+    }
   });
 
   refs["directory-confirm-cancel-button"].addEventListener("click", () => {
@@ -1995,6 +2150,15 @@ export function initApp() {
 
   refs["directory-confirm-proceed-button"].addEventListener("click", () => {
     handleDirectoryConfirmProceed();
+  });
+
+  refs["zip-confirm-cancel-button"].addEventListener("click", () => {
+    refs["zip-confirm-dialog"].close();
+  });
+
+  refs["zip-confirm-proceed-button"].addEventListener("click", () => {
+    refs["zip-confirm-dialog"].close();
+    handleExportZip();
   });
 
   wireTechDetailsToggle(refs["success-tech-details-button"], refs["success-tech-details-wrap"]);
@@ -2019,7 +2183,12 @@ export function initApp() {
 
   refs["rewrite-configuration-button"].addEventListener("click", () => {
     hideResultViews();
-    openDirectoryConfirmDialog();
+
+    if (lastExportMethod === "zip") {
+      openZipConfirmDialog();
+    } else {
+      openDirectoryConfirmDialog();
+    }
   });
 
   refs["error-close-button"].addEventListener("click", () => {

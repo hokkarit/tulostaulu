@@ -1,4 +1,4 @@
-import { sanitizeFileName } from "./file-names.js";
+import { sanitizeFileName, buildDateStampedFileName } from "./file-names.js";
 
 const MAGIC = "TTC1";
 const FORMAT_NAME = "tulostaulu-konfiguraatio";
@@ -89,26 +89,7 @@ export function exportConfigurationBlob(state) {
 }
 
 export function buildExportFileName(state) {
-  const now = new Date();
-  const pad = (value) => String(value).padStart(2, "0");
-  const datePart = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-
-  const homeName = state && typeof state.homeName === "string" ? state.homeName.trim() : "";
-  const guestName = state && typeof state.guestName === "string" ? state.guestName.trim() : "";
-
-  let teamsPart = "";
-
-  if (homeName && guestName) {
-    teamsPart = `${sanitizeFileName(homeName)}-vs-${sanitizeFileName(guestName)}`;
-  } else if (homeName) {
-    teamsPart = sanitizeFileName(homeName);
-  } else if (guestName) {
-    teamsPart = sanitizeFileName(guestName);
-  }
-
-  const parts = ["tulostaulu-konfiguraatio", teamsPart, datePart].filter(Boolean);
-
-  return `${parts.join("-")}.ttconf`;
+  return buildDateStampedFileName(state, "tulostaulu-konfiguraatio", "ttconf");
 }
 
 export async function parseConfigurationFile(file) {

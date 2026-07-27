@@ -1,6 +1,7 @@
-import { buildAdFileName, buildUniqueMediaName, buildLogoFileName } from "./file-names.js";
+import { buildAdFileName, buildUniqueMediaName, buildLogoFileName, buildDateStampedFileName } from "./file-names.js";
 import { ensureManagedDirectories, clearDirectory, writeFile, verifyPermission } from "./file-system.js";
 import { verifyWriteResult } from "./configuration-verifier.js";
+import { createZipBlob } from "./zip-writer.js";
 
 const textEncoder = new TextEncoder();
 
@@ -87,13 +88,21 @@ export function createWritePlan(state) {
   return plan;
 }
 
-function buildWriteQueue(plan) {
+function collectTeamDataItems(plan) {
   const homeNameItem = plan.home.find((item) => item.kind === "text");
   const homeLogoItem = plan.home.find((item) => item.kind === "binary");
   const guestNameItem = plan.guest.find((item) => item.kind === "text");
   const guestLogoItem = plan.guest.find((item) => item.kind === "binary");
 
-  const teamDataItems = [homeNameItem, guestNameItem, homeLogoItem, guestLogoItem].filter(Boolean);
+  return [homeNameItem, guestNameItem, homeLogoItem, guestLogoItem].filter(Boolean);
+}
+
+function flattenPlanItems(plan) {
+  return [...collectTeamDataItems(plan), ...plan.ads, ...plan.goal, ...plan.media];
+}
+
+function buildWriteQueue(plan) {
+  const teamDataItems = collectTeamDataItems(plan);
 
   return [
     ...teamDataItems.map((item) => ({ item, phase: "writing-team-data" })),
@@ -170,4 +179,21 @@ export async function writeConfiguration(rootHandle, plan, { replaceExisting, on
 
   onProgress?.("verifying", {});
   await verifyWriteResult(dirs, plan);
+}
+
+const ROOT_FOLDER_NAME = "dsbController";
+
+export async function createConfigurationZipBlob(plan, { onProgress } = {}) {
+  const entries = flattenPlanItems(plan).map((item) => ({
+    path: `${ROOT_FOLDER_NAME}/${item.targetDir}/${item.targetName}`,
+    data: item.kind === "text" ? textEncoder.encode(item.content) : item.sourceFile
+  }));
+
+  return await createZipBlob(entries, {
+    onProgress: (index, total, path) => onProgress?.(index, total, path)
+  });
+}
+
+export function buildZipExportFileName(state) {
+  return buildDateStampedFileName(state, ROOT_FOLDER_NAME, "zip");
 }

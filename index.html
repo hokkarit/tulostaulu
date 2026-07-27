@@ -40,6 +40,14 @@
             Tuo konfiguraatio
           </button>
         </li>
+        <li role="none">
+          <button type="button" id="export-zip-button" role="menuitem" class="page-menu-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5 12 3 3.75 7.5m16.5 0-16.5 0m16.5 0v9L12 21m0 0-8.25-4.5v-9M12 21V12M3.75 7.5 12 12"/>
+            </svg>
+            Tallenna konfiguraatio Zip-tiedostona
+          </button>
+        </li>
       </ul>
     </div>
   </div>
@@ -51,7 +59,8 @@
 
 <main>
   <div id="fsa-warning" class="warning-banner" hidden role="alert">
-    <p><strong>Sovellus ei toimi muussa kuin Chrome-, Chromium- tai Edge-selaimessa.</strong></p>
+    <p><strong>Sovellus toimii parhaiten Chrome-, Chromium- tai Edge-selaimella tietokoneella.</strong></p>
+    <p>Tälläkin selaimella lomakkeen voi täyttää ja konfiguraation luoda, mutta suora kirjoittaminen USB-muistitikulle ei ole tuettu.</p>
   </div>
 
   <div id="media-cache-notice" class="info-banner" hidden role="status" aria-live="polite">
@@ -232,10 +241,7 @@
   <section id="success-view" class="result-view success-view" tabindex="-1" hidden aria-labelledby="success-heading">
     <h2 id="success-heading">Konfiguraatio kirjoitettiin onnistuneesti.</h2>
     <dl id="success-summary" class="summary-list"></dl>
-    <p>
-      Odota vielä hetki, jotta käyttöjärjestelmä ehtii viimeistellä kirjoituksen.
-      Poista muistitikku sen jälkeen hallitusti käyttöjärjestelmän Poista laite- tai Eject-toiminnolla.
-    </p>
+    <p id="success-instructions"></p>
 
     <div class="tech-details-toggle">
       <button type="button" id="success-tech-details-button" class="button-secondary"
@@ -289,6 +295,17 @@
   <div class="dialog-actions">
     <button type="button" id="directory-confirm-cancel-button" class="button-secondary">Peruuta</button>
     <button type="button" id="directory-confirm-proceed-button" class="button-primary">Jatka ja valitse kansio</button>
+  </div>
+</dialog>
+
+<dialog id="zip-confirm-dialog">
+  <h2>Tallenna konfiguraatio Zip-tiedostona</h2>
+  <p>Zip-tiedosto ladataan selaimen kautta, eikä sitä kirjoiteta suoraan USB-muistitikulle. Siirrä ladattu tiedosto USB-muistitikulle ja pura se siellä manuaalisesti.</p>
+  <p>Varmista, että purkamisessa syntyvä dsbController-kansio tulee suoraan USB-muistitikun juureen (älä pura sitä esimerkiksi toisen kansion sisään).</p>
+
+  <div class="dialog-actions">
+    <button type="button" id="zip-confirm-cancel-button" class="button-secondary">Peruuta</button>
+    <button type="button" id="zip-confirm-proceed-button" class="button-primary">Tallenna Zip-tiedosto</button>
   </div>
 </dialog>
 
