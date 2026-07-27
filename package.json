@@ -1,0 +1,10 @@
+{
+  "name": "videotulostaulun-ottelukonfiguraatio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Selainpohjainen työkalu Jidoka-videotulostaulun ottelukohtaisen USB-konfiguraation luomiseen.",
+  "scripts": {
+    "test": "node tests/run-tests.mjs"
+  }
+}

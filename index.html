@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<title>Videotulostaulun ottelukonfiguraatio</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header class="page-header">
+  <div class="page-header-top">
+    <div class="page-header-title">
+      <img src="./images/logos/Hokkarit.png" alt="Hokkarit" class="page-header-logo">
+      <h1>Videotulostaulun ottelukonfiguraatio</h1>
+    </div>
+
+    <div class="page-menu">
+      <button type="button" id="page-menu-button" class="icon-button page-menu-button"
+              aria-haspopup="true" aria-expanded="false" aria-controls="page-menu-list" aria-label="Valikko">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+        </svg>
+      </button>
+      <ul id="page-menu-list" class="page-menu-list" role="menu" aria-label="Valikko" hidden>
+        <li role="none">
+          <button type="button" id="export-configuration-button" role="menuitem" class="page-menu-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15"/>
+            </svg>
+            Vie konfiguraatio
+          </button>
+        </li>
+        <li role="none">
+          <button type="button" id="import-configuration-button" role="menuitem" class="page-menu-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+            </svg>
+            Tuo konfiguraatio
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="lead">Täytä ottelun tiedot, valitse käytettävät kuvat ja videot ja kirjoita valmis konfiguraatio USB-muistitikulle.</p>
+</header>
+
+<input type="file" id="import-configuration-input" accept=".ttconf" class="visually-hidden">
+
+<main>
+  <div id="fsa-warning" class="warning-banner" hidden role="alert">
+    <p><strong>Suora kirjoitus USB-muistitikulle vaatii tietokoneella käytettävän Chrome- tai Edge-selaimen.</strong></p>
+    <p>File System Access API vaatii HTTPS-yhteyden tai localhost-ympäristön.</p>
+  </div>
+
+  <div id="media-cache-notice" class="info-banner" hidden role="status" aria-live="polite">
+    <p id="media-cache-notice-text"></p>
+    <button type="button" id="media-cache-clear-button" class="button-secondary">
+      Hylkää palautetut tiedot
+    </button>
+  </div>
+
+  <form id="configuration-form" novalidate>
+
+    <section class="section" aria-labelledby="teams-heading">
+      <h2 id="teams-heading" class="visually-hidden">Joukkueet</h2>
+      <div class="teams-grid">
+        <fieldset class="team-fieldset">
+          <legend>1. Kotijoukkue</legend>
+
+          <div class="field">
+            <label for="home-name-input">Kotijoukkueen nimi</label>
+            <div class="combobox-wrapper">
+              <input type="text" id="home-name-input" name="homeName" maxlength="40"
+                     role="combobox" aria-autocomplete="list" aria-expanded="false"
+                     aria-controls="home-name-suggestions" autocomplete="off"
+                     aria-describedby="home-name-counter home-name-error home-name-status" required>
+              <ul id="home-name-suggestions" class="suggestion-list" role="listbox"
+                  aria-label="Joukkue-ehdotukset" hidden></ul>
+            </div>
+            <div class="field-meta">
+              <span id="home-name-counter" class="char-counter">0 / 8</span>
+            </div>
+            <p id="home-name-error" class="field-error" role="alert" hidden></p>
+            <p id="home-name-status" class="hint-text" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label for="home-logo-input">Kotijoukkueen logo</label>
+            <div id="home-logo-dropzone" class="dropzone">
+              <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+              </svg>
+              <p class="dropzone-text">Raahaa logo tähän tai klikkaa valitaksesi</p>
+              <input type="file" id="home-logo-input" name="homeLogo" class="dropzone-input"
+                     accept=".png,.jpg,.jpeg,image/png,image/jpeg" aria-describedby="home-logo-error">
+            </div>
+            <div id="home-logo-preview-wrap" class="file-preview" hidden>
+              <img id="home-logo-preview" alt="" class="logo-preview-image" hidden>
+              <div class="file-preview-info">
+                <p id="home-logo-filename" class="file-name"></p>
+                <p id="home-logo-dimensions" class="file-meta"></p>
+                <p id="home-logo-warning" class="warning-text" hidden></p>
+                <button type="button" id="home-logo-remove-button" class="button-secondary">Poista logo</button>
+              </div>
+            </div>
+            <p id="home-logo-error" class="field-error" role="alert" hidden></p>
+          </div>
+        </fieldset>
+
+        <fieldset class="team-fieldset">
+          <legend>2. Vierasjoukkue</legend>
+
+          <div class="field">
+            <label for="guest-name-input">Vierasjoukkueen nimi</label>
+            <div class="combobox-wrapper">
+              <input type="text" id="guest-name-input" name="guestName" maxlength="40"
+                     role="combobox" aria-autocomplete="list" aria-expanded="false"
+                     aria-controls="guest-name-suggestions" autocomplete="off"
+                     aria-describedby="guest-name-counter guest-name-error guest-name-status" required>
+              <ul id="guest-name-suggestions" class="suggestion-list" role="listbox"
+                  aria-label="Joukkue-ehdotukset" hidden></ul>
+            </div>
+            <div class="field-meta">
+              <span id="guest-name-counter" class="char-counter">0 / 8</span>
+            </div>
+            <p id="guest-name-error" class="field-error" role="alert" hidden></p>
+            <p id="guest-name-status" class="hint-text" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label for="guest-logo-input">Vierasjoukkueen logo</label>
+            <div id="guest-logo-dropzone" class="dropzone">
+              <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+              </svg>
+              <p class="dropzone-text">Raahaa logo tähän tai klikkaa valitaksesi</p>
+              <input type="file" id="guest-logo-input" name="guestLogo" class="dropzone-input"
+                     accept=".png,.jpg,.jpeg,image/png,image/jpeg" aria-describedby="guest-logo-error">
+            </div>
+            <div id="guest-logo-preview-wrap" class="file-preview" hidden>
+              <img id="guest-logo-preview" alt="" class="logo-preview-image" hidden>
+              <div class="file-preview-info">
+                <p id="guest-logo-filename" class="file-name"></p>
+                <p id="guest-logo-dimensions" class="file-meta"></p>
+                <p id="guest-logo-warning" class="warning-text" hidden></p>
+                <button type="button" id="guest-logo-remove-button" class="button-secondary">Poista logo</button>
+              </div>
+            </div>
+            <p id="guest-logo-error" class="field-error" role="alert" hidden></p>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="ads-heading">
+      <h2 id="ads-heading">3. Mainokset</h2>
+      <div class="field">
+        <label for="ad-input">Mainostiedostot (voit valita useita, PNG, JPG, JPEG tai MP4)</label>
+        <div id="ad-dropzone" class="dropzone">
+          <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+          </svg>
+          <p class="dropzone-text">Raahaa mainostiedostoja tähän tai klikkaa valitaksesi</p>
+          <input type="file" id="ad-input" name="ads" class="dropzone-input"
+                 accept=".png,.jpg,.jpeg,.mp4,image/png,image/jpeg,video/mp4" multiple>
+        </div>
+        <p id="ad-error" class="field-error" role="alert" hidden></p>
+      </div>
+      <ul id="ads-list" class="file-list" aria-label="Mainosten järjestys"></ul>
+    </section>
+
+    <section class="section" aria-labelledby="goal-heading">
+      <h2 id="goal-heading">4. Maalivideo</h2>
+      <div class="field">
+        <label for="goal-input">Maalivideo (valinnainen, vain MP4)</label>
+        <div id="goal-dropzone" class="dropzone">
+          <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+          </svg>
+          <p class="dropzone-text">Raahaa maalivideo tähän tai klikkaa valitaksesi</p>
+          <input type="file" id="goal-input" name="goalVideo" class="dropzone-input" accept=".mp4,video/mp4">
+        </div>
+        <p id="goal-error" class="field-error" role="alert" hidden></p>
+      </div>
+      <ul id="goal-list" class="file-list" aria-label="Valittu maalivideo"></ul>
+    </section>
+
+    <section class="section" aria-labelledby="media-heading">
+      <h2 id="media-heading">5. Muut mediat</h2>
+      <div class="field">
+        <label for="media-input">Muut mediatiedostot (voit valita useita, MP4, PNG, JPG, JPEG, MP3 tai WAV)</label>
+        <div id="media-dropzone" class="dropzone">
+          <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+          </svg>
+          <p class="dropzone-text">Raahaa mediatiedostoja tähän tai klikkaa valitaksesi</p>
+          <input type="file" id="media-input" name="media" class="dropzone-input"
+                 accept=".mp4,.png,.jpg,.jpeg,.mp3,.wav,video/mp4,image/png,image/jpeg,audio/mpeg,audio/wav"
+                 multiple>
+        </div>
+        <p id="media-error" class="field-error" role="alert" hidden></p>
+      </div>
+      <ul id="media-list" class="file-list" aria-label="Muiden mediatiedostojen järjestys"></ul>
+    </section>
+
+    <section class="section" aria-labelledby="replace-heading">
+      <h2 id="replace-heading" class="visually-hidden">Vanhojen tiedostojen käsittely</h2>
+      <label class="checkbox-field">
+        <input type="checkbox" id="replace-existing-checkbox" checked>
+        Korvaa aiempi ottelukonfiguraatio
+      </label>
+      <p id="replace-warning" class="warning-text" hidden>Vanhoja mainoksia tai mediatiedostoja voi jäädä kansioihin.</p>
+    </section>
+
+    <section class="section write-section">
+      <h2 class="visually-hidden">8. Kirjoitus</h2>
+      <button type="button" id="write-button" class="button-primary" disabled
+              aria-describedby="write-button-hint">
+        Valitse USB-muistitikku ja kirjoita tiedostot
+      </button>
+      <p id="write-button-hint" class="hint-text" aria-live="polite"></p>
+
+      <div id="progress-region" class="progress-region" aria-live="polite" hidden>
+        <p id="progress-text"></p>
+        <p id="progress-count"></p>
+      </div>
+    </section>
+  </form>
+
+  <section id="success-view" class="result-view success-view" tabindex="-1" hidden aria-labelledby="success-heading">
+    <h2 id="success-heading">Konfiguraatio kirjoitettiin onnistuneesti.</h2>
+    <dl id="success-summary" class="summary-list"></dl>
+    <p>
+      Odota vielä hetki, jotta käyttöjärjestelmä ehtii viimeistellä kirjoituksen.
+      Poista muistitikku sen jälkeen hallitusti käyttöjärjestelmän Poista laite- tai Eject-toiminnolla.
+    </p>
+
+    <div class="tech-details-toggle">
+      <button type="button" id="success-tech-details-button" class="button-secondary"
+              aria-expanded="false" aria-controls="success-tech-details-wrap">
+        Näytä tekniset tiedot
+      </button>
+      <div id="success-tech-details-wrap" hidden>
+        <label for="success-tech-details-textarea" class="visually-hidden">Tekniset tiedot (kopioitavissa)</label>
+        <textarea id="success-tech-details-textarea" class="tech-details-textarea" readonly rows="14"></textarea>
+        <button type="button" id="success-tech-details-copy-button" class="button-secondary">
+          Kopioi tekniset tiedot
+        </button>
+      </div>
+    </div>
+
+    <div class="result-actions">
+      <button type="button" id="new-configuration-button" class="button-secondary">Luo uusi konfiguraatio</button>
+      <button type="button" id="rewrite-configuration-button" class="button-primary">Kirjoita sama konfiguraatio uudelleen</button>
+    </div>
+  </section>
+
+  <section id="error-view" class="result-view error-view" tabindex="-1" hidden aria-labelledby="error-heading">
+    <h2 id="error-heading">Tiedostojen kirjoittaminen epäonnistui.</h2>
+    <p id="error-message"></p>
+
+    <div class="tech-details-toggle">
+      <button type="button" id="error-tech-details-button" class="button-secondary"
+              aria-expanded="false" aria-controls="error-tech-details-wrap">
+        Näytä tekniset tiedot
+      </button>
+      <div id="error-tech-details-wrap" hidden>
+        <label for="error-tech-details-textarea" class="visually-hidden">Tekniset tiedot (kopioitavissa)</label>
+        <textarea id="error-tech-details-textarea" class="tech-details-textarea" readonly rows="14"></textarea>
+        <button type="button" id="error-tech-details-copy-button" class="button-secondary">
+          Kopioi tekniset tiedot
+        </button>
+      </div>
+    </div>
+
+    <div class="result-actions">
+      <button type="button" id="error-close-button" class="button-secondary">Sulje virheilmoitus</button>
+    </div>
+  </section>
+</main>
+
+<dialog id="directory-confirm-dialog">
+  <h2>Valitse USB-muistitikun juurihakemisto</h2>
+  <p>Valitse seuraavaksi USB-muistitikun juurihakemisto. Älä valitse valmiiksi dsbController-kansiota.</p>
+  <p>Valitun sijainnin dsbController-kansion nykyinen sisältö voidaan korvata. USB-muistitikun muut tiedostot säilyvät.</p>
+
+  <div class="dialog-actions">
+    <button type="button" id="directory-confirm-cancel-button" class="button-secondary">Peruuta</button>
+    <button type="button" id="directory-confirm-proceed-button" class="button-primary">Jatka ja valitse kansio</button>
+  </div>
+</dialog>
+
+<footer class="page-footer">
+  <p>Kaikki tiedostojen käsittely tapahtuu paikallisesti selaimessa. Mitään ei lähetetä verkkoon.</p>
+</footer>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+{
+  "teams": [
+    {
+      "nimi": "Hämeenkyrön Hokkarit",
+      "lyhytNimi": "Hokkarit",
+      "paikkakunta": "Hämeenkyrö",
+      "logo": "Hokkarit.png"
+    },
+    {
+      "nimi": "HC Nokia",
+      "lyhytNimi": "HC Nokia",
+      "paikkakunta": "Nokia",
+      "logo": "HC Nokia.png"
+    },
+    {
+      "nimi": "HPK",
+      "lyhytNimi": "HPK",
+      "paikkakunta": "Hämeenlinna",
+      "logo": "HPK.jpg"
+    },
+    {
+      "nimi": "Ilves",
+      "lyhytNimi": "Ilves",
+      "paikkakunta": "Tampere",
+      "logo": "Ilves.png"
+    },
+    {
+      "nimi": "Valkeakosken Kiekko-Ahma",
+      "lyhytNimi": "KAhma",
+      "paikkakunta": "Valkeakoski",
+      "logo": "KAhma.png"
+    },
+    {
+      "nimi": "Kangasalan Kisa-Eagles",
+      "lyhytNimi": "KisaE",
+      "paikkakunta": "Kangasala",
+      "logo": "Kisa Eagles.png"
+    },
+    {
+      "nimi": "Virtain Kiekko-Karhut",
+      "lyhytNimi": "KKarhut",
+      "paikkakunta": "Virrat",
+      "logo": "KKarhut.jpg"
+    },
+    {
+      "nimi": "KooVee",
+      "lyhytNimi": "KooVee",
+      "paikkakunta": "Tampere",
+      "logo": "KooVee.png"
+    },
+    {
+      "nimi": "Koillis-Pirkan Kiekko",
+      "lyhytNimi": "KPK",
+      "paikkakunta": "Mänttä",
+      "logo": "KPK.png"
+    },
+    {
+      "nimi": "LeKi",
+      "lyhytNimi": "LeKi",
+      "paikkakunta": "Lempäälä",
+      "logo": "Leki.png"
+    },
+    {
+      "nimi": "Pelicans",
+      "lyhytNimi": "Pelicans",
+      "paikkakunta": "Lahti",
+      "logo": "Pelicans.png"
+    },
+    {
+      "nimi": "Pirkkalan Pingviinit",
+      "lyhytNimi": "Pingvi",
+      "paikkakunta": "Pirkkala",
+      "logo": "Pingviinit.png"
+    },
+    {
+      "nimi": "PK-83",
+      "lyhytNimi": "PK-83",
+      "paikkakunta": "Parkano",
+      "logo": "PK83.png"
+    },
+    {
+      "nimi": "S-Kiekko",
+      "lyhytNimi": "S-Kiekko",
+      "paikkakunta": "Seinäjoki",
+      "logo": "s-kiekko.png"
+    },
+    {
+      "nimi": "Tappara",
+      "lyhytNimi": "Tappara",
+      "paikkakunta": "Tampere",
+      "logo": "Tappara.png"
+    },
+    {
+      "nimi": "Uplakers",
+      "lyhytNimi": "Uplakers",
+      "paikkakunta": "Ylöjärvi",
+      "logo": "Uplakers.png"
+    }
+  ]
+}
