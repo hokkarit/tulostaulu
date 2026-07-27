@@ -2,6 +2,18 @@ export function isFileSystemAccessSupported() {
   return "showDirectoryPicker" in window;
 }
 
+export function isChromeOrEdgeBrowser() {
+  const brands = navigator.userAgentData && navigator.userAgentData.brands;
+
+  if (Array.isArray(brands)) {
+    return brands.some(({ brand }) => brand === "Google Chrome" || brand === "Microsoft Edge");
+  }
+
+  const userAgent = navigator.userAgent;
+
+  return /Edg\//.test(userAgent) || (/Chrome\//.test(userAgent) && !/OPR\/|Brave\//.test(userAgent));
+}
+
 export async function verifyPermission(handle, readWrite = true) {
   const options = {};
 

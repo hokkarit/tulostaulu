@@ -13,7 +13,7 @@ import {
 } from "./validation.js";
 import { sanitizeFileName } from "./file-names.js";
 import { readImageDimensions } from "./image-metadata.js";
-import { isFileSystemAccessSupported, pickRootDirectory } from "./file-system.js";
+import { isFileSystemAccessSupported, isChromeOrEdgeBrowser, pickRootDirectory } from "./file-system.js";
 import { createWritePlan, writeConfiguration } from "./configuration-writer.js";
 import { loadTeamCatalog, fetchTeamLogoFile, getDefaultTeamName } from "./team-catalog.js";
 import { loadPreferences, savePreferences, clearPreferences } from "./preferences.js";
@@ -689,6 +689,12 @@ async function initTeamCatalog() {
 
 // --- Median muistaminen (IndexedDB) ---------------------------------------
 
+function showInfoBanner(text, { showClearButton = false } = {}) {
+  refs["media-cache-notice-text"].textContent = text;
+  setHidden(refs["media-cache-clear-button"], !showClearButton);
+  setHidden(refs["media-cache-notice"], false);
+}
+
 async function restoreCachedMedia() {
   requestPersistentStorage();
 
@@ -736,8 +742,7 @@ async function restoreCachedMedia() {
   }
 
   if (hasRestoredAny) {
-    refs["media-cache-notice-text"].textContent = "Palautettu edellisestä käyttökerrasta tietoja.";
-    setHidden(refs["media-cache-notice"], false);
+    showInfoBanner("Palautettu edellisestä käyttökerrasta tietoja.", { showClearButton: true });
     refreshDerivedViews();
   }
 }
@@ -853,7 +858,7 @@ async function applyImportedConfiguration(imported, fileName) {
   importInfo = { fileName, importedAt: new Date() };
 
   refreshDerivedViews();
-  showTransientNotice(`Konfiguraatio tuotu tiedostosta "${fileName}".`);
+  showInfoBanner(`Konfiguraatio tuotu tiedostosta "${fileName}".`);
 }
 
 async function handleImportFile(fileList) {
@@ -1469,7 +1474,7 @@ async function buildCommonTechDetailsLines(rootHandle) {
     }
   }
 
-  if (navigator.storage && typeof navigator.storage.estimate === "function") {
+  if (isChromeOrEdgeBrowser() && navigator.storage && typeof navigator.storage.estimate === "function") {
     try {
       const estimate = await navigator.storage.estimate();
 
@@ -1483,7 +1488,7 @@ async function buildCommonTechDetailsLines(rootHandle) {
     }
   }
 
-  if (navigator.storage && typeof navigator.storage.persisted === "function") {
+  if (isChromeOrEdgeBrowser() && navigator.storage && typeof navigator.storage.persisted === "function") {
     try {
       const persisted = await navigator.storage.persisted();
       lines.push(`Pysyvä tallennustila myönnetty: ${persisted ? "Kyllä" : "Ei"}`);
@@ -1578,7 +1583,7 @@ function updateWriteButtonState() {
     hintEl.textContent = "Kirjoitus on käynnissä, painike on tilapäisesti pois käytöstä.";
   } else if (!supported) {
     hintEl.textContent =
-      "Painike on pois käytöstä, koska selaimesi ei tue suoraa kirjoitusta USB-muistitikulle. Käytä tietokoneella Chrome- tai Edge-selainta.";
+      "Painike on pois käytöstä, koska sovellus ei toimi muussa kuin Chrome-, Chromium- tai Edge-selaimessa.";
   } else if (missing.length > 0) {
     hintEl.textContent =
       `Painike on pois käytöstä, koska seuraavat pakolliset tiedot puuttuvat tai ovat virheellisiä: ${missing.join(", ")}.`;
