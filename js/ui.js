@@ -40,8 +40,24 @@ const $ = (id) => document.getElementById(id);
 const refs = {};
 
 const touched = {
-  homeName: false,
-  guestName: false
+  home: false,
+  guest: false,
+  home2: false,
+  guest2: false
+};
+
+const STATE_FIELD_BY_KIND = {
+  home: "homeName",
+  guest: "guestName",
+  home2: "homeName2",
+  guest2: "guestName2"
+};
+
+const HAS_LOGO_BY_KIND = {
+  home: true,
+  guest: true,
+  home2: false,
+  guest2: false
 };
 
 const LARGE_FILE_WARNING_TEXT = "Tiedosto on erittäin suuri. Kirjoittaminen voi kestää pitkään.";
@@ -108,11 +124,14 @@ function cacheRefs() {
     "media-cache-notice-text",
     "media-cache-clear-button",
     "configuration-form",
+    "pienpeli-checkbox",
+    "pienpeli-teams-section",
     "home-name-input",
     "home-name-suggestions",
     "home-name-counter",
     "home-name-error",
     "home-name-status",
+    "home-logo-field",
     "home-logo-input",
     "home-logo-dropzone",
     "home-logo-preview-wrap",
@@ -127,6 +146,7 @@ function cacheRefs() {
     "guest-name-counter",
     "guest-name-error",
     "guest-name-status",
+    "guest-logo-field",
     "guest-logo-input",
     "guest-logo-dropzone",
     "guest-logo-preview-wrap",
@@ -136,6 +156,16 @@ function cacheRefs() {
     "guest-logo-warning",
     "guest-logo-remove-button",
     "guest-logo-error",
+    "home2-name-input",
+    "home2-name-suggestions",
+    "home2-name-counter",
+    "home2-name-error",
+    "home2-name-status",
+    "guest2-name-input",
+    "guest2-name-suggestions",
+    "guest2-name-counter",
+    "guest2-name-error",
+    "guest2-name-status",
     "ad-input",
     "ad-dropzone",
     "ad-error",
@@ -251,15 +281,17 @@ const MAX_VISIBLE_SUGGESTIONS = 3;
 
 const suggestionState = {
   home: { matches: [], activeIndex: -1, suppressNext: false },
-  guest: { matches: [], activeIndex: -1, suppressNext: false }
+  guest: { matches: [], activeIndex: -1, suppressNext: false },
+  home2: { matches: [], activeIndex: -1, suppressNext: false },
+  guest2: { matches: [], activeIndex: -1, suppressNext: false }
 };
 
 function getNameInput(kind) {
-  return kind === "home" ? refs["home-name-input"] : refs["guest-name-input"];
+  return refs[`${kind}-name-input`];
 }
 
 function getSuggestionListEl(kind) {
-  return kind === "home" ? refs["home-name-suggestions"] : refs["guest-name-suggestions"];
+  return refs[`${kind}-name-suggestions`];
 }
 
 function findTeamCatalogEntry(value) {
@@ -384,7 +416,7 @@ function selectSuggestion(kind, entry) {
   const input = getNameInput(kind);
 
   input.value = entry.lyhytNimi;
-  touched[kind === "home" ? "homeName" : "guestName"] = true;
+  touched[kind] = true;
   suggestionState[kind].suppressNext = true;
   closeSuggestions(kind);
   handleNameInput(kind);
@@ -521,10 +553,10 @@ async function triggerTeamLogoAutoFill(kind, entry, statusEl) {
 }
 
 function handleNameInput(kind) {
-  const input = kind === "home" ? refs["home-name-input"] : refs["guest-name-input"];
-  const counter = kind === "home" ? refs["home-name-counter"] : refs["guest-name-counter"];
-  const errorEl = kind === "home" ? refs["home-name-error"] : refs["guest-name-error"];
-  const statusEl = kind === "home" ? refs["home-name-status"] : refs["guest-name-status"];
+  const input = getNameInput(kind);
+  const counter = refs[`${kind}-name-counter`];
+  const errorEl = refs[`${kind}-name-error`];
+  const statusEl = refs[`${kind}-name-status`];
 
   const rawValue = input.value;
   const trimmedValue = rawValue.trim();
@@ -540,33 +572,30 @@ function handleNameInput(kind) {
     return;
   }
 
-  if (kind === "home") {
-    state.homeName = rawValue;
-    savePreferences({ homeName: trimmedValue });
-  } else {
-    state.guestName = rawValue;
-    savePreferences({ guestName: trimmedValue });
-  }
+  state[STATE_FIELD_BY_KIND[kind]] = rawValue;
+  savePreferences({ [STATE_FIELD_BY_KIND[kind]]: trimmedValue });
 
-  touched[kind === "home" ? "homeName" : "guestName"] = true;
+  touched[kind] = true;
 
   counter.textContent = `${getVisibleLength(rawValue)} / 8`;
 
   const errorMessage = validateTeamName(rawValue);
-  setFieldError(errorEl, touched[kind === "home" ? "homeName" : "guestName"] ? errorMessage : "");
+  setFieldError(errorEl, touched[kind] ? errorMessage : "");
 
-  if (matchedEntry) {
-    triggerTeamLogoAutoFill(kind, matchedEntry, statusEl);
-  } else {
-    lastAutoLogoKey[kind] = null;
-    statusEl.textContent = "";
+  if (HAS_LOGO_BY_KIND[kind]) {
+    if (matchedEntry) {
+      triggerTeamLogoAutoFill(kind, matchedEntry, statusEl);
+    } else {
+      lastAutoLogoKey[kind] = null;
+      statusEl.textContent = "";
+    }
   }
 
   refreshDerivedViews();
 }
 
 function handleNameBlur(kind) {
-  touched[kind === "home" ? "homeName" : "guestName"] = true;
+  touched[kind] = true;
   handleNameInput(kind);
   closeSuggestions(kind);
 }
@@ -698,6 +727,47 @@ async function initTeamCatalog() {
     refs["guest-name-input"].value = rememberedGuestName;
     handleNameInput("guest");
   }
+
+  const rememberedHomeName2 = preferences.homeName2.trim();
+
+  if (rememberedHomeName2) {
+    refs["home2-name-input"].value = rememberedHomeName2;
+    handleNameInput("home2");
+  }
+
+  const rememberedGuestName2 = preferences.guestName2.trim();
+
+  if (rememberedGuestName2) {
+    refs["guest2-name-input"].value = rememberedGuestName2;
+    handleNameInput("guest2");
+  }
+}
+
+// --- Pienpeli-tila (neljä joukkuetta) ---------------------------------------
+
+function updatePienpeliVisibility() {
+  const enabled = state.pienpeli;
+
+  setHidden(refs["pienpeli-teams-section"], !enabled);
+  setHidden(refs["home-logo-field"], enabled);
+  setHidden(refs["guest-logo-field"], enabled);
+
+  document.querySelectorAll(".team-game-number").forEach((el) => {
+    setHidden(el, !enabled);
+  });
+}
+
+function handlePienpeliToggle(enabled) {
+  state.pienpeli = enabled;
+  savePreferences({ pienpeli: enabled });
+
+  if (enabled) {
+    removeLogo("home");
+    removeLogo("guest");
+  }
+
+  updatePienpeliVisibility();
+  refreshDerivedViews();
 }
 
 // --- Median muistaminen (IndexedDB) ---------------------------------------
@@ -767,7 +837,7 @@ function discardRestoredGuestName() {
   refs["guest-name-input"].value = "";
   refs["guest-name-counter"].textContent = "0 / 8";
   setFieldError(refs["guest-name-error"], "");
-  touched.guestName = false;
+  touched.guest = false;
   state.guestName = "";
   savePreferences({ guestName: "" });
 }
@@ -852,6 +922,8 @@ async function handleExportZip() {
   clearProgress();
   closeSuggestions("home");
   closeSuggestions("guest");
+  closeSuggestions("home2");
+  closeSuggestions("guest2");
   setFormDisabled(true);
   isExportingZip = true;
   updateWriteButtonState();
@@ -899,18 +971,29 @@ async function applyImportedConfiguration(imported, fileName) {
   savePreferences({ replaceExisting: imported.replaceExisting });
   updateReplaceWarning();
 
+  refs["pienpeli-checkbox"].checked = imported.pienpeli;
+  handlePienpeliToggle(imported.pienpeli);
+
   refs["home-name-input"].value = imported.homeName;
   handleNameInput("home");
 
   refs["guest-name-input"].value = imported.guestName;
   handleNameInput("guest");
 
-  if (imported.files.homeLogo) {
-    await handleLogoFiles("home", [imported.files.homeLogo]);
-  }
+  refs["home2-name-input"].value = imported.homeName2;
+  handleNameInput("home2");
 
-  if (imported.files.guestLogo) {
-    await handleLogoFiles("guest", [imported.files.guestLogo]);
+  refs["guest2-name-input"].value = imported.guestName2;
+  handleNameInput("guest2");
+
+  if (!imported.pienpeli) {
+    if (imported.files.homeLogo) {
+      await handleLogoFiles("home", [imported.files.homeLogo]);
+    }
+
+    if (imported.files.guestLogo) {
+      await handleLogoFiles("guest", [imported.files.guestLogo]);
+    }
   }
 
   imported.files.ads.forEach((file) => {
@@ -1505,13 +1588,25 @@ function buildTreeText(plan) {
 }
 
 function buildSummaryEntries() {
-  return [
+  const entries = [
     ["Kotijoukkue", state.homeName.trim() || "–"],
-    ["Vierasjoukkue", state.guestName.trim() || "–"],
+    ["Vierasjoukkue", state.guestName.trim() || "–"]
+  ];
+
+  entries.push(["Pienpeli-tila", state.pienpeli ? "Kyllä" : "Ei"]);
+
+  if (state.pienpeli) {
+    entries.push(["Kotijoukkue (peli 2)", state.homeName2.trim() || "–"]);
+    entries.push(["Vierasjoukkue (peli 2)", state.guestName2.trim() || "–"]);
+  }
+
+  entries.push(
     ["Mainoksia", String(state.ads.length)],
     ["Maalivideo", state.goalVideo ? "Kyllä" : "Ei"],
     ["Muita medioita", String(state.media.length)]
-  ];
+  );
+
+  return entries;
 }
 
 function renderSummary(targetEl, entries) {
@@ -1530,8 +1625,11 @@ function renderSummary(targetEl, entries) {
 function collectAllFiles() {
   const files = [];
 
-  if (state.homeLogo) files.push(state.homeLogo.file);
-  if (state.guestLogo) files.push(state.guestLogo.file);
+  if (!state.pienpeli) {
+    if (state.homeLogo) files.push(state.homeLogo.file);
+    if (state.guestLogo) files.push(state.guestLogo.file);
+  }
+
   state.ads.forEach((entry) => files.push(entry.file));
   if (state.goalVideo) files.push(state.goalVideo.file);
   state.media.forEach((entry) => files.push(entry.file));
@@ -1669,12 +1767,22 @@ function getMissingRequirements() {
     missing.push("vierasjoukkueen nimi");
   }
 
-  if (validateLogoFile(state.homeLogo ? state.homeLogo.file : null)) {
-    missing.push("kotijoukkueen logo");
-  }
+  if (state.pienpeli) {
+    if (validateTeamName(state.homeName2)) {
+      missing.push("kotijoukkueen nimi (peli 2)");
+    }
 
-  if (validateLogoFile(state.guestLogo ? state.guestLogo.file : null)) {
-    missing.push("vierasjoukkueen logo");
+    if (validateTeamName(state.guestName2)) {
+      missing.push("vierasjoukkueen nimi (peli 2)");
+    }
+  } else {
+    if (validateLogoFile(state.homeLogo ? state.homeLogo.file : null)) {
+      missing.push("kotijoukkueen logo");
+    }
+
+    if (validateLogoFile(state.guestLogo ? state.guestLogo.file : null)) {
+      missing.push("vierasjoukkueen logo");
+    }
   }
 
   return missing;
@@ -1882,6 +1990,8 @@ async function runWriteProcess(rootHandle) {
   clearProgress();
   closeSuggestions("home");
   closeSuggestions("guest");
+  closeSuggestions("home2");
+  closeSuggestions("guest2");
   setFormDisabled(true);
   state.isWriting = true;
   state.writeStatus = "creating-directories";
@@ -1952,19 +2062,15 @@ function openZipConfirmDialog() {
 function resetFormFields() {
   lastAutoLogoKey.home = null;
   lastAutoLogoKey.guest = null;
-  closeSuggestions("home");
-  closeSuggestions("guest");
-  refs["home-name-status"].textContent = "";
-  refs["guest-name-status"].textContent = "";
 
-  refs["home-name-input"].value = "";
-  refs["guest-name-input"].value = "";
-  refs["home-name-counter"].textContent = "0 / 8";
-  refs["guest-name-counter"].textContent = "0 / 8";
-  setFieldError(refs["home-name-error"], "");
-  setFieldError(refs["guest-name-error"], "");
-  touched.homeName = false;
-  touched.guestName = false;
+  ["home", "guest", "home2", "guest2"].forEach((kind) => {
+    closeSuggestions(kind);
+    refs[`${kind}-name-status`].textContent = "";
+    refs[`${kind}-name-input`].value = "";
+    refs[`${kind}-name-counter`].textContent = "0 / 8";
+    setFieldError(refs[`${kind}-name-error`], "");
+    touched[kind] = false;
+  });
 
   refs["home-logo-input"].value = "";
   refs["guest-logo-input"].value = "";
@@ -1972,6 +2078,9 @@ function resetFormFields() {
   setFieldError(refs["guest-logo-error"], "");
   renderLogo("home");
   renderLogo("guest");
+
+  refs["pienpeli-checkbox"].checked = false;
+  handlePienpeliToggle(false);
 
   refs["ad-input"].value = "";
   setFieldError(refs["ad-error"], "");
@@ -2075,6 +2184,11 @@ export function initApp() {
     state.replaceExisting = false;
   }
 
+  if (preferences.pienpeli) {
+    refs["pienpeli-checkbox"].checked = true;
+  }
+  handlePienpeliToggle(refs["pienpeli-checkbox"].checked);
+
   initTeamCatalog();
   restoreCachedMedia();
 
@@ -2082,15 +2196,17 @@ export function initApp() {
     discardRestoredMedia();
   });
 
-  refs["home-name-input"].addEventListener("input", () => handleNameInput("home"));
-  refs["home-name-input"].addEventListener("input", () => updateSuggestions("home"));
-  refs["home-name-input"].addEventListener("keydown", (event) => handleNameInputKeydown("home", event));
-  refs["home-name-input"].addEventListener("blur", () => handleNameBlur("home"));
+  refs["pienpeli-checkbox"].addEventListener("change", (event) => {
+    handlePienpeliToggle(event.target.checked);
+  });
 
-  refs["guest-name-input"].addEventListener("input", () => handleNameInput("guest"));
-  refs["guest-name-input"].addEventListener("input", () => updateSuggestions("guest"));
-  refs["guest-name-input"].addEventListener("keydown", (event) => handleNameInputKeydown("guest", event));
-  refs["guest-name-input"].addEventListener("blur", () => handleNameBlur("guest"));
+  ["home", "guest", "home2", "guest2"].forEach((kind) => {
+    const input = refs[`${kind}-name-input`];
+    input.addEventListener("input", () => handleNameInput(kind));
+    input.addEventListener("input", () => updateSuggestions(kind));
+    input.addEventListener("keydown", (event) => handleNameInputKeydown(kind, event));
+    input.addEventListener("blur", () => handleNameBlur(kind));
+  });
 
   refs["home-logo-input"].addEventListener("change", (event) => {
     handleLogoFiles("home", event.target.files).finally(() => {
@@ -2199,6 +2315,8 @@ export function initApp() {
 
   refs["home-name-counter"].textContent = "0 / 8";
   refs["guest-name-counter"].textContent = "0 / 8";
+  refs["home2-name-counter"].textContent = "0 / 8";
+  refs["guest2-name-counter"].textContent = "0 / 8";
   updateReplaceWarning();
   refreshDerivedViews();
 }

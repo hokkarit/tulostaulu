@@ -7,22 +7,24 @@ const FORMAT_VERSION = 1;
 function buildManifest(state) {
   const entries = [];
 
-  if (state.homeLogo) {
-    entries.push({
-      category: "homeLogo",
-      name: state.homeLogo.file.name,
-      type: state.homeLogo.file.type,
-      size: state.homeLogo.file.size
-    });
-  }
+  if (!state.pienpeli) {
+    if (state.homeLogo) {
+      entries.push({
+        category: "homeLogo",
+        name: state.homeLogo.file.name,
+        type: state.homeLogo.file.type,
+        size: state.homeLogo.file.size
+      });
+    }
 
-  if (state.guestLogo) {
-    entries.push({
-      category: "guestLogo",
-      name: state.guestLogo.file.name,
-      type: state.guestLogo.file.type,
-      size: state.guestLogo.file.size
-    });
+    if (state.guestLogo) {
+      entries.push({
+        category: "guestLogo",
+        name: state.guestLogo.file.name,
+        type: state.guestLogo.file.type,
+        size: state.guestLogo.file.size
+      });
+    }
   }
 
   state.ads.forEach((entry) => {
@@ -58,6 +60,9 @@ function buildManifest(state) {
     createdAt: new Date().toISOString(),
     homeName: state.homeName,
     guestName: state.guestName,
+    pienpeli: Boolean(state.pienpeli),
+    homeName2: state.homeName2 || "",
+    guestName2: state.guestName2 || "",
     replaceExisting: state.replaceExisting,
     entries
   };
@@ -66,8 +71,11 @@ function buildManifest(state) {
 function collectOrderedFiles(state) {
   const files = [];
 
-  if (state.homeLogo) files.push(state.homeLogo.file);
-  if (state.guestLogo) files.push(state.guestLogo.file);
+  if (!state.pienpeli) {
+    if (state.homeLogo) files.push(state.homeLogo.file);
+    if (state.guestLogo) files.push(state.guestLogo.file);
+  }
+
   state.ads.forEach((entry) => files.push(entry.file));
   if (state.goalVideo) files.push(state.goalVideo.file);
   state.media.forEach((entry) => files.push(entry.file));
@@ -161,6 +169,9 @@ export async function parseConfigurationFile(file) {
   return {
     homeName: typeof manifest.homeName === "string" ? manifest.homeName : "",
     guestName: typeof manifest.guestName === "string" ? manifest.guestName : "",
+    pienpeli: typeof manifest.pienpeli === "boolean" ? manifest.pienpeli : false,
+    homeName2: typeof manifest.homeName2 === "string" ? manifest.homeName2 : "",
+    guestName2: typeof manifest.guestName2 === "string" ? manifest.guestName2 : "",
     replaceExisting: typeof manifest.replaceExisting === "boolean" ? manifest.replaceExisting : true,
     files: filesByCategory
   };

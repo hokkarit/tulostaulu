@@ -74,12 +74,28 @@
 
     <section class="section" aria-labelledby="teams-heading">
       <h2 id="teams-heading" class="visually-hidden">Joukkueet</h2>
+
+      <label class="toggle-field" for="pienpeli-checkbox">
+        <span class="toggle-switch">
+          <input type="checkbox" id="pienpeli-checkbox" class="toggle-switch-input" role="switch">
+          <span class="toggle-switch-track" aria-hidden="true">
+            <span class="toggle-switch-thumb"></span>
+          </span>
+        </span>
+        <span class="toggle-field-text">
+          <span class="toggle-field-label">Pienpeli -tila</span>
+          <span class="toggle-field-description">
+            Neljä joukkuetta samalla kentällä. Näytöllä ei ole tilaa logoille, joten ne piilotetaan.
+          </span>
+        </span>
+      </label>
+
       <div class="teams-grid">
         <fieldset class="team-fieldset">
-          <legend>1. Kotijoukkue</legend>
+          <legend><span class="team-game-number" hidden>1. </span>Kotijoukkue</legend>
 
           <div class="field">
-            <label for="home-name-input">Kotijoukkueen nimi</label>
+            <label for="home-name-input"><span class="team-game-number" hidden>1. </span>Kotijoukkueen nimi</label>
             <div class="combobox-wrapper">
               <input type="text" id="home-name-input" name="homeName" maxlength="40"
                      role="combobox" aria-autocomplete="list" aria-expanded="false"
@@ -95,7 +111,7 @@
             <p id="home-name-status" class="hint-text" aria-live="polite"></p>
           </div>
 
-          <div class="field">
+          <div class="field" id="home-logo-field">
             <label for="home-logo-input">Kotijoukkueen logo</label>
             <div id="home-logo-dropzone" class="dropzone">
               <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -119,10 +135,10 @@
         </fieldset>
 
         <fieldset class="team-fieldset">
-          <legend>2. Vierasjoukkue</legend>
+          <legend><span class="team-game-number" hidden>1. </span>Vierasjoukkue</legend>
 
           <div class="field">
-            <label for="guest-name-input">Vierasjoukkueen nimi</label>
+            <label for="guest-name-input"><span class="team-game-number" hidden>1. </span>Vierasjoukkueen nimi</label>
             <div class="combobox-wrapper">
               <input type="text" id="guest-name-input" name="guestName" maxlength="40"
                      role="combobox" aria-autocomplete="list" aria-expanded="false"
@@ -138,7 +154,7 @@
             <p id="guest-name-status" class="hint-text" aria-live="polite"></p>
           </div>
 
-          <div class="field">
+          <div class="field" id="guest-logo-field">
             <label for="guest-logo-input">Vierasjoukkueen logo</label>
             <div id="guest-logo-dropzone" class="dropzone">
               <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -161,10 +177,54 @@
           </div>
         </fieldset>
       </div>
+
+      <div id="pienpeli-teams-section" class="teams-grid" hidden>
+        <fieldset class="team-fieldset">
+          <legend><span class="team-game-number" hidden>2. </span>Kotijoukkue</legend>
+
+          <div class="field">
+            <label for="home2-name-input"><span class="team-game-number" hidden>2. </span>Kotijoukkueen nimi</label>
+            <div class="combobox-wrapper">
+              <input type="text" id="home2-name-input" name="homeName2" maxlength="40"
+                     role="combobox" aria-autocomplete="list" aria-expanded="false"
+                     aria-controls="home2-name-suggestions" autocomplete="off"
+                     aria-describedby="home2-name-counter home2-name-error home2-name-status">
+              <ul id="home2-name-suggestions" class="suggestion-list" role="listbox"
+                  aria-label="Joukkue-ehdotukset" hidden></ul>
+            </div>
+            <div class="field-meta">
+              <span id="home2-name-counter" class="char-counter">0 / 8</span>
+            </div>
+            <p id="home2-name-error" class="field-error" role="alert" hidden></p>
+            <p id="home2-name-status" class="hint-text" aria-live="polite"></p>
+          </div>
+        </fieldset>
+
+        <fieldset class="team-fieldset">
+          <legend><span class="team-game-number" hidden>2. </span>Vierasjoukkue</legend>
+
+          <div class="field">
+            <label for="guest2-name-input"><span class="team-game-number" hidden>2. </span>Vierasjoukkueen nimi</label>
+            <div class="combobox-wrapper">
+              <input type="text" id="guest2-name-input" name="guestName2" maxlength="40"
+                     role="combobox" aria-autocomplete="list" aria-expanded="false"
+                     aria-controls="guest2-name-suggestions" autocomplete="off"
+                     aria-describedby="guest2-name-counter guest2-name-error guest2-name-status">
+              <ul id="guest2-name-suggestions" class="suggestion-list" role="listbox"
+                  aria-label="Joukkue-ehdotukset" hidden></ul>
+            </div>
+            <div class="field-meta">
+              <span id="guest2-name-counter" class="char-counter">0 / 8</span>
+            </div>
+            <p id="guest2-name-error" class="field-error" role="alert" hidden></p>
+            <p id="guest2-name-status" class="hint-text" aria-live="polite"></p>
+          </div>
+        </fieldset>
+      </div>
     </section>
 
     <section class="section" aria-labelledby="ads-heading">
-      <h2 id="ads-heading">3. Mainokset</h2>
+      <h2 id="ads-heading">Mainokset</h2>
       <div class="field">
         <label for="ad-input">Mainostiedostot (voit valita useita, PNG, JPG, JPEG tai MP4)</label>
         <div id="ad-dropzone" class="dropzone">
@@ -181,7 +241,7 @@
     </section>
 
     <section class="section" aria-labelledby="goal-heading">
-      <h2 id="goal-heading">4. Maalivideo</h2>
+      <h2 id="goal-heading">Maalivideo</h2>
       <div class="field">
         <label for="goal-input">Maalivideo (valinnainen, vain MP4)</label>
         <div id="goal-dropzone" class="dropzone">
@@ -197,7 +257,7 @@
     </section>
 
     <section class="section" aria-labelledby="media-heading">
-      <h2 id="media-heading">5. Muut mediat</h2>
+      <h2 id="media-heading">Muut mediat</h2>
       <div class="field">
         <label for="media-input">Muut mediatiedostot (voit valita useita, MP4, PNG, JPG, JPEG, MP3 tai WAV)</label>
         <div id="media-dropzone" class="dropzone">
@@ -224,7 +284,7 @@
     </section>
 
     <section class="section write-section">
-      <h2 class="visually-hidden">8. Kirjoitus</h2>
+      <h2 class="visually-hidden">Kirjoitus</h2>
       <button type="button" id="write-button" class="button-primary" disabled
               aria-describedby="write-button-hint">
         Valitse USB-muistitikku ja kirjoita tiedostot

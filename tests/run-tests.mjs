@@ -41,6 +41,9 @@ function fakeState(overrides = {}) {
     guestName: "ILVES",
     homeLogo: { file: fakeFile("koti.png", 1000, "image/png") },
     guestLogo: { file: fakeFile("vieras.jpg", 2000, "image/jpeg") },
+    pienpeli: false,
+    homeName2: "",
+    guestName2: "",
     ads: [],
     goalVideo: null,
     media: [],
@@ -336,6 +339,44 @@ test("yksittäinen tiedoston kirjoitusvirhe keskeyttää prosessin", async () =>
       return true;
     }
   );
+});
+
+// --- Pienpeli-tila (neljä joukkuetta) --------------------------------------
+
+test("pienpeli-tilassa kirjoitetaan nimi2.txt-tiedostot eikä logoja", async () => {
+  const root = createMockRoot();
+  const state = fakeState({
+    pienpeli: true,
+    homeName2: "PIENH",
+    guestName2: "PIENV"
+  });
+  const plan = createWritePlan(state);
+
+  assert.equal(plan.home.length, 2);
+  assert.equal(plan.guest.length, 2);
+  assert.ok(plan.home.every((item) => item.kind === "text"));
+  assert.ok(plan.guest.every((item) => item.kind === "text"));
+
+  await writeConfiguration(root, plan, { replaceExisting: true, onProgress: () => {} });
+
+  const dsb = await root.getDirectoryHandle("dsbController");
+  const home = await dsb.getDirectoryHandle("home");
+  const guest = await dsb.getDirectoryHandle("guest");
+
+  assert.equal(await (await (await home.getFileHandle("nimi.txt")).getFile()).text(), "HOKKARIT");
+  assert.equal(await (await (await home.getFileHandle("nimi2.txt")).getFile()).text(), "PIENH");
+  assert.equal(await (await (await guest.getFileHandle("nimi.txt")).getFile()).text(), "ILVES");
+  assert.equal(await (await (await guest.getFileHandle("nimi2.txt")).getFile()).text(), "PIENV");
+
+  await assert.rejects(home.getFileHandle("home.png"));
+  await assert.rejects(guest.getFileHandle("guest.jpg"));
+});
+
+test("normaalitilassa ei kirjoiteta nimi2.txt-tiedostoja", () => {
+  const plan = createWritePlan(fakeState({ pienpeli: false }));
+
+  assert.ok(!plan.home.some((item) => item.targetName === "nimi2.txt"));
+  assert.ok(!plan.guest.some((item) => item.targetName === "nimi2.txt"));
 });
 
 test("onnistunut kirjoitus käynnistää tarkistuksen, joka havaitsee virheellisen sisällön", async () => {

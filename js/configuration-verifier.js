@@ -17,28 +17,24 @@ export async function verifyTextFile(directory, filename, expectedText) {
   }
 }
 
+async function verifyTeamItem(directory, item) {
+  if (item.kind === "text") {
+    await verifyTextFile(directory, item.targetName, item.content);
+  } else {
+    await verifyFileSize(directory, item.targetName, item.expectedSize);
+  }
+}
+
 export async function verifyWriteResult(dirs, plan) {
-  const homeNameItem = plan.home.find((item) => item.kind === "text");
-  const homeLogoItem = plan.home.find((item) => item.kind === "binary");
-  const guestNameItem = plan.guest.find((item) => item.kind === "text");
-  const guestLogoItem = plan.guest.find((item) => item.kind === "binary");
+  for (const item of plan.home) {
+    await verifyTeamItem(dirs.home, item);
+  }
+
+  for (const item of plan.guest) {
+    await verifyTeamItem(dirs.guest, item);
+  }
+
   const goalItem = plan.goal[0];
-
-  if (homeNameItem) {
-    await verifyTextFile(dirs.home, homeNameItem.targetName, homeNameItem.content);
-  }
-
-  if (guestNameItem) {
-    await verifyTextFile(dirs.guest, guestNameItem.targetName, guestNameItem.content);
-  }
-
-  if (homeLogoItem) {
-    await verifyFileSize(dirs.home, homeLogoItem.targetName, homeLogoItem.expectedSize);
-  }
-
-  if (guestLogoItem) {
-    await verifyFileSize(dirs.guest, guestLogoItem.targetName, guestLogoItem.expectedSize);
-  }
 
   if (goalItem) {
     await verifyFileSize(dirs.goal, goalItem.targetName, goalItem.expectedSize);

@@ -33,24 +33,45 @@ export function createWritePlan(state) {
     expectedSize: textEncoder.encode(guestName).length
   });
 
-  if (state.homeLogo) {
+  if (state.pienpeli) {
+    const homeName2 = (state.homeName2 || "").trim();
+    const guestName2 = (state.guestName2 || "").trim();
+
     plan.home.push({
       targetDir: "home",
-      targetName: buildLogoFileName("home", state.homeLogo.file),
-      kind: "binary",
-      sourceFile: state.homeLogo.file,
-      expectedSize: state.homeLogo.file.size
+      targetName: "nimi2.txt",
+      kind: "text",
+      content: homeName2,
+      expectedSize: textEncoder.encode(homeName2).length
     });
-  }
 
-  if (state.guestLogo) {
     plan.guest.push({
       targetDir: "guest",
-      targetName: buildLogoFileName("guest", state.guestLogo.file),
-      kind: "binary",
-      sourceFile: state.guestLogo.file,
-      expectedSize: state.guestLogo.file.size
+      targetName: "nimi2.txt",
+      kind: "text",
+      content: guestName2,
+      expectedSize: textEncoder.encode(guestName2).length
     });
+  } else {
+    if (state.homeLogo) {
+      plan.home.push({
+        targetDir: "home",
+        targetName: buildLogoFileName("home", state.homeLogo.file),
+        kind: "binary",
+        sourceFile: state.homeLogo.file,
+        expectedSize: state.homeLogo.file.size
+      });
+    }
+
+    if (state.guestLogo) {
+      plan.guest.push({
+        targetDir: "guest",
+        targetName: buildLogoFileName("guest", state.guestLogo.file),
+        kind: "binary",
+        sourceFile: state.guestLogo.file,
+        expectedSize: state.guestLogo.file.size
+      });
+    }
   }
 
   state.ads.forEach((entry, index) => {
@@ -89,12 +110,7 @@ export function createWritePlan(state) {
 }
 
 function collectTeamDataItems(plan) {
-  const homeNameItem = plan.home.find((item) => item.kind === "text");
-  const homeLogoItem = plan.home.find((item) => item.kind === "binary");
-  const guestNameItem = plan.guest.find((item) => item.kind === "text");
-  const guestLogoItem = plan.guest.find((item) => item.kind === "binary");
-
-  return [homeNameItem, guestNameItem, homeLogoItem, guestLogoItem].filter(Boolean);
+  return [...plan.home, ...plan.guest];
 }
 
 function flattenPlanItems(plan) {

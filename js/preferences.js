@@ -29,6 +29,9 @@ export function loadPreferences() {
   return {
     homeName: typeof stored.homeName === "string" ? stored.homeName : "",
     guestName: typeof stored.guestName === "string" ? stored.guestName : "",
+    homeName2: typeof stored.homeName2 === "string" ? stored.homeName2 : "",
+    guestName2: typeof stored.guestName2 === "string" ? stored.guestName2 : "",
+    pienpeli: typeof stored.pienpeli === "boolean" ? stored.pienpeli : false,
     replaceExisting: typeof stored.replaceExisting === "boolean" ? stored.replaceExisting : true,
     adNameOrder: Array.isArray(stored.adNameOrder)
       ? stored.adNameOrder.filter((name) => typeof name === "string")

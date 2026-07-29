@@ -257,6 +257,10 @@ main,
   }
 }
 
+.teams-grid + .teams-grid {
+  margin-top: 1.25rem;
+}
+
 .team-fieldset {
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -600,6 +604,85 @@ button:focus,
 .checkbox-field input {
   width: 1.1rem;
   height: 1.1rem;
+}
+
+.toggle-field {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+  cursor: pointer;
+}
+
+.toggle-field-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.toggle-field-label {
+  font-weight: 600;
+}
+
+.toggle-field-description {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.toggle-switch {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.toggle-switch-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.toggle-switch-track {
+  display: inline-flex;
+  align-items: center;
+  width: 2.75rem;
+  height: 1.5rem;
+  padding: 0.15rem;
+  border-radius: 999px;
+  background: var(--color-border);
+  transition: background-color 0.15s ease;
+}
+
+.toggle-switch-thumb {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.toggle-switch-input:checked ~ .toggle-switch-track {
+  background: var(--color-primary);
+}
+
+.toggle-switch-input:checked ~ .toggle-switch-track .toggle-switch-thumb {
+  transform: translateX(1.25rem);
+}
+
+.toggle-switch-input:focus-visible ~ .toggle-switch-track {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.toggle-switch-input:disabled ~ .toggle-switch-track {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .tree-preview {
