@@ -310,7 +310,9 @@ button:focus,
 
 .field-meta {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   margin-top: 0.25rem;
 }
 
@@ -754,6 +756,20 @@ button:focus,
   max-width: 32rem;
   color: var(--color-muted);
   font-size: 0.9rem;
+}
+
+/* Kenttäkohtainen tila-/vihjeteksti (esim. logon hakutila) näytetään
+   .field-metan sisällä samalla rivillä kuin merkkilaskuri, ei keskitettynä
+   ja allekkain .hint-text-oletuksen mukaisesti. */
+.field-status {
+  margin: 0;
+  max-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.field-status:empty {
+  margin: 0;
 }
 
 .status-icon {

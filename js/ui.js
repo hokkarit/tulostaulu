@@ -764,6 +764,11 @@ function handlePienpeliToggle(enabled) {
   if (enabled) {
     removeLogo("home");
     removeLogo("guest");
+  } else {
+    // Pienpeli-tilassa ollessa logon haku on ohitettu, joten haetaan se nyt
+    // uudelleen nimikentissä jo oleville joukkueille.
+    handleNameInput("home");
+    handleNameInput("guest");
   }
 
   updatePienpeliVisibility();
