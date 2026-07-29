@@ -582,7 +582,7 @@ function handleNameInput(kind) {
   const errorMessage = validateTeamName(rawValue);
   setFieldError(errorEl, touched[kind] ? errorMessage : "");
 
-  if (HAS_LOGO_BY_KIND[kind]) {
+  if (HAS_LOGO_BY_KIND[kind] && !state.pienpeli) {
     if (matchedEntry) {
       triggerTeamLogoAutoFill(kind, matchedEntry, statusEl);
     } else {
