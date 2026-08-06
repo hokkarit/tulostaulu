@@ -835,6 +835,61 @@ async function restoreCachedMedia() {
   }
 }
 
+// --- Oletusmediat (paketin mukana tulevat maalivideo ja media) -------------
+
+const DEFAULT_MEDIA_DIRECTORY = "./media/";
+const DEFAULT_GOAL_VIDEO_FILENAME = "goal.mp4";
+const DEFAULT_MEDIA_FILENAMES = ["kunniota_pelia.mp4"];
+
+async function fetchDefaultMediaFile(filename) {
+  const url = `${DEFAULT_MEDIA_DIRECTORY}${encodeURIComponent(filename)}`;
+
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      return new File([blob], filename, { type: blob.type || "video/mp4" });
+    }
+  } catch {
+    // Oletusmediaa ei löytynyt tai verkkovirhe; jatketaan ilman sitä.
+  }
+
+  return null;
+}
+
+async function loadDefaultMedia() {
+  if (!state.goalVideo) {
+    const file = await fetchDefaultMediaFile(DEFAULT_GOAL_VIDEO_FILENAME);
+
+    if (file) {
+      state.goalVideo = createFileEntry(file, { previewUrl: URL.createObjectURL(file) });
+      renderGoal();
+    }
+  }
+
+  for (const filename of DEFAULT_MEDIA_FILENAMES) {
+    const alreadyPresent = state.media.some((entry) => entry.file.name === filename);
+
+    if (alreadyPresent) {
+      continue;
+    }
+
+    const file = await fetchDefaultMediaFile(filename);
+
+    if (file) {
+      state.media.push(
+        createFileEntry(file, {
+          previewUrl: isPreviewableFile(file) ? URL.createObjectURL(file) : null
+        })
+      );
+    }
+  }
+
+  renderMediaList();
+  refreshDerivedViews();
+}
+
 function discardRestoredGuestName() {
   lastAutoLogoKey.guest = null;
   closeSuggestions("guest");
@@ -2195,7 +2250,7 @@ export function initApp() {
   handlePienpeliToggle(refs["pienpeli-checkbox"].checked);
 
   initTeamCatalog();
-  restoreCachedMedia();
+  restoreCachedMedia().then(loadDefaultMedia);
 
   refs["media-cache-clear-button"].addEventListener("click", () => {
     discardRestoredMedia();
