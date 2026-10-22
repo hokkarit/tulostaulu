@@ -101,6 +101,12 @@
       "lyhytNimi": "Uplakers",
       "paikkakunta": "Ylöjärvi",
       "logo": "Uplakers.png"
+    },
+    {
+      "nimi": "Vammalan Palloseura",
+      "lyhytNimi": "VaPS",
+      "paikkakunta": "Sastamala",
+      "logo": "VaPS.png"
     }
   ]
 }
